@@ -1,580 +1,249 @@
-# 🌐 Project Observability Setup Guide (AWS & GCP)
 
-This repository contains documentation, implementation guides, and best practices for configuring **Observability** across **Amazon Web Services (AWS)** and **Google Cloud Platform (GCP)**.
+🌐
+Project Observability Setup Guide
+Amazon Web Services (AWS) & Google Cloud Platform (GCP)
+Logs  •  Metrics  •  Traces
+A centralized reference for enabling full-stack observability across Kubernetes, virtual machines, serverless, and microservice architectures.
+ Table of Contents
+Purpose	3
+Observability Architecture	3
+AWS Architecture	3
+GCP Architecture	3
+AWS Observability	4
+Logs	4
+Metrics	5
+Traces	6
+GCP Observability	7
+Logs	7
+Metrics	8
+Traces	8
+Advantages & Disadvantages	10
+AWS vs GCP Comparison	11
+Project Monitoring Checklist	12
+Recommended Monitoring Strategy	13
+Repository Structure	14
+ Purpose
+Observability helps teams understand the health and behavior of applications and infrastructure in production. Rather than reacting blindly to incidents, teams with strong observability can quickly detect, localize, and resolve issues before they impact users.
+This guide explains how to configure observability using the three foundational pillars:
+Pillar	Description
+📜  Logs	What happened? — discrete, timestamped event records
+📈  Metrics	How is the system performing? — numeric time-series data
+🔍  Traces	Where did the request go, and where is the delay? — end-to-end request paths
 
-The goal is to provide a centralized guide for enabling **Logs**, **Metrics**, and **Traces** for cloud-native applications running on Kubernetes, virtual machines, serverless services, and microservices.
-
----
-
-# 📖 Table of Contents
-
-- [Purpose](#purpose)
-- [Observability Architecture](#observability-architecture)
-  - [AWS Architecture](#aws-architecture)
-  - [GCP Architecture](#gcp-architecture)
-- [AWS Observability](#aws-observability)
-  - [Logs](#31-logs)
-  - [Metrics](#32-metrics)
-  - [Traces](#33-traces)
-- [GCP Observability](#gcp-observability)
-  - [Logs](#41-logs)
-  - [Metrics](#42-metrics)
-  - [Traces](#43-traces)
-- [Advantages & Disadvantages](#advantages--disadvantages)
-- [AWS vs GCP Comparison](#aws-vs-gcp-comparison)
-- [Project Monitoring Checklist](#project-monitoring-checklist)
-- [Recommended Monitoring Strategy](#recommended-monitoring-strategy)
-
----
-
-# Purpose
-
-Observability helps teams understand the health and behavior of applications and infrastructure.
-
-This guide explains how to configure observability using the **three pillars**:
-
-| Pillar | Description |
-|----------|-------------|
-| 📜 Logs | What happened? |
-| 📈 Metrics | How is the system performing? |
-| 🔍 Traces | Where did the request go and where is the delay? |
-
----
-
-# Observability Architecture
-
-## AWS Architecture
-
-```text
-Application / Microservices
-        │
-        ├──────── Logs ─────────► CloudWatch Logs
-        │
-        ├──────── Metrics ──────► CloudWatch Metrics
-        │
-        └──────── Traces ───────► AWS X-Ray
-```
-
----
-
-## GCP Architecture
-
-```text
-Application / Microservices
-        │
-        ├──────── Logs ─────────► Cloud Logging
-        │
-        ├──────── Metrics ──────► Cloud Monitoring
-        │
-        └──────── Traces ───────► Cloud Trace
-```
-
----
-
-# AWS Observability
-
-## 3.1 Logs
-
-### Service
-
-- Amazon CloudWatch Logs
-
-### Supported Resources
-
-- Amazon EKS
-- Amazon ECS
-- EC2
-- Lambda
-
-### Configuration
-
-### Amazon EKS
-
-Install **AWS Fluent Bit**.
-
-```text
-Application Pods
-        │
-        ▼
-AWS Fluent Bit
-        │
-        ▼
-CloudWatch Logs
-```
-
-### EC2
-
-Install the **CloudWatch Agent**.
-
-Configure log collection from:
-
-```
+Observability Architecture
+AWS Architecture
+Every AWS-native workload — containers, VMs, or serverless functions — feeds each pillar into its dedicated managed service:
+ 
+Figure 1 — AWS Observability Architecture Overview
+GCP Architecture
+On GCP, the same three signal types route to Google Cloud's operations suite:
+ 
+Figure 2 — GCP Observability Architecture Overview
+ AWS Observability
+3.1  Logs
+Service: Amazon CloudWatch Logs
+Supported resources:
+•	Amazon EKS
+•	Amazon ECS
+•	EC2
+•	Lambda
+Configuration — Amazon EKS
+Install AWS Fluent Bit as a DaemonSet to ship container logs from every node.
+ 
+Figure 3 — AWS EKS Log Pipeline
+Configuration — EC2
+Install the CloudWatch Agent and configure log collection from:
 /var/log/messages
 /var/log/syslog
 /var/log/nginx/access.log
 /var/log/nginx/error.log
-```
-
-### Lambda
-
-No configuration required.
-
-Lambda automatically writes logs to CloudWatch.
-
-### Verification
-
-Navigate to:
-
-```
-AWS Console
-    └── CloudWatch
-          └── Log Groups
-```
-
-Verify:
-
-- Application logs
-- Error logs
-- Startup logs
-- Request logs
-
----
-
-# 3.2 Metrics
-
-### Service
-
-Amazon CloudWatch Metrics
-
-### Automatic Metrics
-
+Configuration — Lambda
+No configuration required — Lambda automatically writes logs to CloudWatch.
+Verification
+Navigate to: AWS Console → CloudWatch → Log Groups
+Confirm the following are present:
+•	Application logs
+•	Error logs
+•	Startup logs
+•	Request logs
+3.2  Metrics
+Service: Amazon CloudWatch Metrics
 AWS automatically collects metrics for:
+•	EC2
+•	Lambda
+•	RDS
+•	ELB
+•	S3
+•	DynamoDB
+Amazon EKS
+Enable Container Insights, the CloudWatch Agent, and (optionally) Amazon Managed Service for Prometheus.
+ 
+Figure 4 — AWS EKS Metrics Pipeline
+Infrastructure Metrics	Application Metrics
+CPU Utilization	Request Count
+Memory Usage	Response Time
+Disk Usage	Error Rate
+Network Traffic	Pod CPU / Memory / Restarts
 
-- EC2
-- Lambda
-- RDS
-- ELB
-- S3
-- DynamoDB
-
-### Amazon EKS
-
-Enable:
-
-- Container Insights
-- CloudWatch Agent
-- Amazon Managed Service for Prometheus (Optional)
-
-```text
-Pods
-   │
-Container Insights
-   │
-CloudWatch Metrics
-```
-
-### Important Metrics
-
-Infrastructure
-
-- CPU Utilization
-- Memory Usage
-- Disk Usage
-- Network Traffic
-
-Application
-
-- Request Count
-- Response Time
-- Error Rate
-- Pod CPU
-- Pod Memory
-- Pod Restarts
-
-### Verification
-
-Navigate to:
-
-```
-CloudWatch
-    └── Metrics
-```
-
-Verify:
-
-- CPU
-- Memory
-- Latency
-- Request Count
-
----
-
-# 3.3 Traces
-
-### Service
-
-AWS X-Ray
-
-### Purpose
-
-Track a request through multiple services.
-
-```text
-Client
-   │
-API Gateway
-   │
-Order Service
-   │
-Payment Service
-   │
-Database
-```
-
-### Configuration
-
+Verification
+Navigate to: CloudWatch → Metrics
+Confirm CPU, Memory, Latency, and Request Count are reporting.
+3.3  Traces
+Service: AWS X-Ray
+Purpose: track a single request as it flows through multiple services.
+ 
+Figure 5 — Example Request Trace (AWS)
+Configuration
 Instrument applications using:
+•	OpenTelemetry SDK
+•	AWS X-Ray SDK
+•	OpenTelemetry Java Agent
+ 
+Figure 6 — AWS Distributed Tracing Pipeline
+Verification
+Navigate to: CloudWatch → Application Signals, or the AWS X-Ray Console.
+•	Trace ID
+•	Request Duration
+•	Service Map
+•	Error Details
+•	Slow Requests
+ GCP Observability
+4.1  Logs
+Service: Cloud Logging
+Supported resources:
+•	GKE
+•	Compute Engine
+•	Cloud Run
+•	App Engine
+Configuration
+Use the built-in logging integration, or the Google Cloud Ops Agent where applicable.
+ 
+Figure 7 — GCP Logging Pipeline
+Verification
+Navigate to: Google Cloud Console → Observability → Logs Explorer
+•	Application logs
+•	HTTP request logs
+•	Error logs
+•	Startup logs
+4.2  Metrics
+Service: Cloud Monitoring
+Metrics are automatically collected for Google Cloud resources. For Kubernetes, enable Cloud Monitoring and (optionally) Managed Service for Prometheus.
+Infrastructure	Application
+CPU	Request Count
+Memory	Error Rate
+Disk	Latency
+Network	Pod CPU / Memory / Restart Count
 
-- OpenTelemetry SDK
-- AWS X-Ray SDK
-- OpenTelemetry Java Agent
-
-```text
-Application
-      │
-OpenTelemetry
-      │
-AWS X-Ray
-```
-
-### Verification
-
-Navigate to:
-
-```
-CloudWatch
-    └── Application Signals
-```
-
-or
-
-```
-AWS X-Ray Console
-```
-
-Verify:
-
-- Trace ID
-- Request Duration
-- Service Map
-- Error Details
-- Slow Requests
-
----
-
-# GCP Observability
-
-## 4.1 Logs
-
-### Service
-
-Cloud Logging
-
-### Supported Resources
-
-- GKE
-- Compute Engine
-- Cloud Run
-- App Engine
-
-### Configuration
-
-Use the built-in logging integration or Google Cloud Ops Agent where applicable.
-
-```text
-Pods
-   │
-Cloud Logging
-```
-
-### Verification
-
-Navigate to:
-
-```
-Google Cloud Console
-
-Observability
-     └── Logs Explorer
-```
-
-Verify:
-
-- Application logs
-- HTTP request logs
-- Error logs
-- Startup logs
-
----
-
-# 4.2 Metrics
-
-### Service
-
-Cloud Monitoring
-
-### Configuration
-
-Metrics are automatically collected for Google Cloud resources.
-
-For Kubernetes:
-
-Enable:
-
-- Cloud Monitoring
-- Managed Service for Prometheus (Optional)
-
-### Monitor
-
-Infrastructure
-
-- CPU
-- Memory
-- Disk
-- Network
-
-Application
-
-- Request Count
-- Error Rate
-- Latency
-- Pod CPU
-- Pod Memory
-- Restart Count
-
-### Verification
-
-Navigate to:
-
-```
-Observability
-     └── Monitoring
-```
-
----
-
-# 4.3 Traces
-
-### Service
-
-Cloud Trace
-
-### Important
-
-Cloud Trace **does not automatically collect application traces.**
-
+Verification
+Navigate to: Observability → Monitoring
+4.3  Traces
+Service: Cloud Trace
+Important: Cloud Trace does NOT automatically collect application traces — instrumentation is required.
 Applications must be instrumented using:
+•	OpenTelemetry SDK
+•	OpenTelemetry Java Agent
+•	OpenTelemetry Collector (optional)
+Kubernetes (GKE)
+ 
+Figure 8 — GCP Tracing Pipeline (GKE)
+Verification
+Navigate to: Observability → Trace
+•	Trace IDs
+•	Span IDs
+•	Service Names
+•	Latency
+•	Errors
+Example request path:
+ 
+Figure 9 — Example Request Trace (GCP)
+ Advantages & Disadvantages
+Logs
+✅ Advantages	⚠️ Disadvantages
+Detailed event history	High storage costs
+Error investigation	Difficult to analyze at scale
+Root cause analysis	Requires retention management
+Security auditing	
 
-- OpenTelemetry SDK
-- OpenTelemetry Java Agent
-- OpenTelemetry Collector (Optional)
+Metrics
+✅ Advantages	⚠️ Disadvantages
+Real-time monitoring	Cannot explain why a problem occurred
+Alerts	Custom metrics may incur additional cost
+Dashboards	
+Capacity planning	
 
-```text
-Application
-      │
-OpenTelemetry
-      │
-Cloud Trace
-```
+Traces
+✅ Advantages	⚠️ Disadvantages
+End-to-end request visibility	Requires application instrumentation
+Root cause analysis	Additional configuration effort
+Latency troubleshooting	Sampling may not capture every request
+Service dependency mapping	
 
-### Kubernetes (GKE)
+AWS vs GCP Comparison
+Feature	AWS	GCP
+Logs	CloudWatch Logs	Cloud Logging
+Metrics	CloudWatch Metrics	Cloud Monitoring
+Traces	AWS X-Ray	Cloud Trace
+Dashboards	CloudWatch Dashboard	Cloud Monitoring Dashboard
+Alerts	CloudWatch Alarms	Alerting Policies
+Service Map	AWS X-Ray	Cloud Trace
+Auto Infrastructure Metrics	✅	✅
+Auto Infrastructure Logs	✅	✅
+Automatic Application Tracing	❌	❌
+OpenTelemetry Support	✅	✅
 
-```text
-Application Pod
-       │
-OpenTelemetry SDK
-       │
-OpenTelemetry Collector
-       │
-Cloud Trace
-```
-
-### Verification
-
-Navigate to:
-
-```
-Observability
-      └── Trace
-```
-
-Verify:
-
-- Trace IDs
-- Span IDs
-- Service Names
-- Latency
-- Errors
-
-Example
-
-```text
-Browser
-    │
-Ingress
-    │
-User Service
-    │
-Payment Service
-    │
-Cloud SQL
-```
-
----
-
-# Advantages & Disadvantages
-
-## Logs
-
-### Advantages
-
-- Detailed event history
-- Error investigation
-- Root cause analysis
-- Security auditing
-
-### Disadvantages
-
-- High storage costs
-- Difficult to analyze at scale
-- Requires retention management
-
----
-
-## Metrics
-
-### Advantages
-
-- Real-time monitoring
-- Alerts
-- Dashboards
-- Capacity planning
-
-### Disadvantages
-
-- Cannot explain why a problem occurred
-- Custom metrics may incur additional cost
-
----
-
-## Traces
-
-### Advantages
-
-- End-to-end request visibility
-- Root cause analysis
-- Latency troubleshooting
-- Service dependency mapping
-
-### Disadvantages
-
-- Requires application instrumentation
-- Additional configuration effort
-- Sampling may not capture every request
-
----
-
-# AWS vs GCP Comparison
-
-| Feature | AWS | GCP |
-|----------|-----|-----|
-| Logs | CloudWatch Logs | Cloud Logging |
-| Metrics | CloudWatch Metrics | Cloud Monitoring |
-| Traces | AWS X-Ray | Cloud Trace |
-| Dashboards | CloudWatch Dashboard | Cloud Monitoring Dashboard |
-| Alerts | CloudWatch Alarms | Alerting Policies |
-| Service Map | AWS X-Ray | Cloud Trace |
-| Auto Infrastructure Metrics | ✅ | ✅ |
-| Auto Infrastructure Logs | ✅ | ✅ |
-| Automatic Application Tracing | ❌ | ❌ |
-| OpenTelemetry Support | ✅ | ✅ |
-
----
-
-# Project Monitoring Checklist
-
-## AWS
-
-- [ ] CloudWatch Logs Enabled
-- [ ] CloudWatch Metrics Enabled
-- [ ] Container Insights Enabled
-- [ ] CloudWatch Agent Installed
-- [ ] AWS X-Ray Enabled
-- [ ] OpenTelemetry Configured
-- [ ] CloudWatch Alarms Created
-- [ ] Dashboards Created
-
----
-
-## GCP
-
-- [ ] Cloud Logging Enabled
-- [ ] Cloud Monitoring Enabled
-- [ ] Cloud Trace Enabled
-- [ ] OpenTelemetry Configured
-- [ ] Alert Policies Created
-- [ ] Dashboards Created
-
----
-
-# Recommended Monitoring Strategy
-
-1. Monitor **Metrics** to detect performance degradation.
-2. Use **Traces** to identify the affected service.
-3. Review **Logs** to determine the exact error.
-4. Configure dashboards and alerts for proactive monitoring.
-5. Continuously optimize observability to improve reliability.
-
----
-
-# Repository Structure
-
-```
-cloud-observability-docs/
-│
-├── README.md
-├── aws/
-│   ├── logs.md
-│   ├── metrics.md
-│   ├── traces.md
-│   ├── dashboards.md
-│   └── alerts.md
-│
-├── gcp/
-│   ├── logging.md
-│   ├── monitoring.md
-│   ├── tracing.md
-│   ├── dashboards.md
-│   └── alerts.md
-│
-├── kubernetes/
-│   ├── eks.md
-│   ├── gke.md
-│   └── opentelemetry.md
-│
-├── architecture/
-├── diagrams/
+Project Monitoring Checklist
+AWS
+☐  CloudWatch Logs Enabled
+☐  CloudWatch Metrics Enabled
+☐  Container Insights Enabled
+☐  CloudWatch Agent Installed
+☐  AWS X-Ray Enabled
+☐  OpenTelemetry Configured
+☐  CloudWatch Alarms Created
+☐  Dashboards Created
+GCP
+☐  Cloud Logging Enabled
+☐  Cloud Monitoring Enabled
+☐  Cloud Trace Enabled
+☐  OpenTelemetry Configured
+☐  Alert Policies Created
+☐  Dashboards Created
+ Recommended Monitoring Strategy
+ 
+Figure 10 — Recommended Monitoring Workflow
+1.	Monitor Metrics to detect performance degradation.
+2.	Use Traces to identify the affected service.
+3.	Review Logs to determine the exact error.
+4.	Configure dashboards and alerts for proactive monitoring.
+5.	Continuously optimize observability to improve reliability.
+ Repository Structure
+cloud-observability-docs/ 
+│ 
+├── README.md 
+├── aws/ 
+│   ├── logs.md 
+│   ├── metrics.md 
+│   ├── traces.md 
+│   ├── dashboards.md 
+│   └── alerts.md 
+│ 
+├── gcp/ 
+│   ├── logging.md 
+│   ├── monitoring.md 
+│   ├── tracing.md 
+│   ├── dashboards.md 
+│   └── alerts.md 
+│ 
+├── kubernetes/ 
+│   ├── eks.md 
+│   ├── gke.md 
+│   └── opentelemetry.md 
+│ 
+├── architecture/ 
+├── diagrams/ 
 └── troubleshooting/
-```
 
----
-
-## Contributing
-
+Contributing
 Contributions are welcome! Feel free to open issues, submit pull requests, or suggest improvements to enhance this documentation.
-
----
-
-## License
-
+License
 This project is intended for educational and operational documentation purposes. Update the license section according to your organization's policy.
